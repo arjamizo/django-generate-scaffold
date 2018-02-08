@@ -1,10 +1,17 @@
 import os
 
-from django.db.models.loading import AppCache
-from django.utils.datastructures import SortedDict
+
+try:
+    from django.db.models.loading import AppCache
+    from django.utils.datastructures import SortedDict
+except:
+    # http://andrewsforge.com/article/upgrading-django-to-17/part-3-django-17-new-features/#deprecated-behavior
+    pass
+
 
 
 def reload_django_appcache():
+    return None
     cache = AppCache()
 
     cache.app_store = SortedDict()

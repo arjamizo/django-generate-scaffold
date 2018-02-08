@@ -3,7 +3,10 @@ from optparse import make_option
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from django.db.models import get_model
+try:
+    from django.db.models import get_model
+except:
+    from django.apps import apps
 from django.template.defaultfilters import slugify
 from django.utils import translation
 from django.utils.encoding import smart_str
@@ -18,7 +21,6 @@ from generate_scaffold.utils.cacheclear import clean_pyc_in_dir, \
                                                reload_django_appcache
 from generate_scaffold.utils.modules import import_child
 
-
 class Command(VerboseCommandMixin, BaseCommand):
     command_name = os.path.split(__file__)[-1].split('.')[0]
     help = (
@@ -30,7 +32,8 @@ class Command(VerboseCommandMixin, BaseCommand):
         'manage.py {cmd_name} blogs Post title:char body:text '
         'blog:foreignkey=Blog'.format(cmd_name=command_name)
     )
-    option_list = BaseCommand.option_list + (
+    option_list = (# (hasattr(BaseCommand, 'option_list') and BaseCommand.option_list or ()) +
+
         make_option('-d', '--dry-run',
             action='store_true',
             dest='dry_run',
@@ -56,6 +59,14 @@ class Command(VerboseCommandMixin, BaseCommand):
                    'DateTimeFields to generated models.')
         ),
     )
+
+    # https://docs.djangoproject.com/en/1.8/howto/custom-management-commands/
+    def add_arguments(self, parser):
+        # parser.add_argument
+        print("ELO")
+        parser.add_argument('args', metavar='N', nargs='+',
+                    help='args to scaffold')
+
 
     def handle(self, *args, **options):
         if settings.USE_I18N:
@@ -183,13 +194,13 @@ class Command(VerboseCommandMixin, BaseCommand):
                 import_child('django.db.models')
 
                 # FIXME - Use namespace dictionary
-                exec code in globals()
+                exec(code, globals())
 
                 # Get reference to generated_model
                 code_str = 'generated_model = {0}().__class__'.format(
                         rendered_model_name)
                 code = compile(code_str, '<string>', 'exec')
-                exec code in globals()
+                exec(code, globals())
                 generated_model = globals()['generated_model']
             else:
                 generated_model = get_model(app_name, model_name)

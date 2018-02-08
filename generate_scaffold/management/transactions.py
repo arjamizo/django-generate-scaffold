@@ -1,7 +1,11 @@
 import codecs
 import os
 import shutil
-import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    import io as StringIO # thanks https://stackoverflow.com/a/18284900/781312
+
 import tempfile
 
 
@@ -102,7 +106,7 @@ class FilesystemTransaction(object):
         return os.path.join(self.temp_directory, str(self.counter))
 
     def rollback(self):
-        for entry in reversed(self.log):
+        for entry in self.log:
             entry.rollback()
 
     def commit(self):
